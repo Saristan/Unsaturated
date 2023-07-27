@@ -9,6 +9,8 @@ public class meleeAttacks : MonoBehaviour
     public Transform dashC;
     public Transform chargeC1;
     public Transform chargeC2;
+    public Transform upChargeC1;
+    public Transform upChargeC2;
 
     public LayerMask enemyLayers;
     public GameObject player;
@@ -225,9 +227,14 @@ public class meleeAttacks : MonoBehaviour
 
     private IEnumerator UpChargeDamage()
     {
-        for(int i = 0; i < 4; i++)
+        for(float i = 0; i < 4; i++)
         {
-            Debug.Log("Boom");
+            Collider2D[] hitEnemies = Physics2D.OverlapAreaAll(chargeC1.position, chargeC2.position, enemyLayers);
+
+            foreach(Collider2D enemy in hitEnemies)
+            {
+                enemy.GetComponent<enemy>().TakeDamage(attackDamage, 0f, knockBack * (4f - i * 0.8f));
+            }
             yield return new WaitForSeconds(0.2f);
         }
     }
