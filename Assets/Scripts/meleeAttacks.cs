@@ -195,12 +195,13 @@ public class meleeAttacks : MonoBehaviour
     {
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
         player.GetComponent<playerMovement>().isDashing = true;
-        float maxSnapSpeed = 40f;
+        float maxSnapSpeed = 30f;
         float snapSpeed = maxSnapSpeed;
         StartCoroutine(UpChargeDamage());
-        while(snapSpeed < maxSnapSpeed/4.5)
+        while(snapSpeed > maxSnapSpeed/4.5)
         {     
             yield return rb.velocity = new Vector2(0f, snapSpeed);
+            snapSpeed -= Time.deltaTime * maxSnapSpeed * 2f;
         }
         player.GetComponent<playerMovement>().isDashing = false;
     }
