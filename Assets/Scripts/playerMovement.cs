@@ -22,6 +22,7 @@ public class playerMovement : MonoBehaviour
     public float dashingPower = 24f;
     public float dashingTime = .25f;
     public float dashingCooldown = 1f;
+    public bool immobile;
 
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Transform groundCheck;
@@ -36,7 +37,7 @@ public class playerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (isDashing)
+        if (isDashing || immobile)
         {
             return;
         }
@@ -95,7 +96,7 @@ public class playerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if(isDashing)
+        if(isDashing || immobile)
         {
             return;
         }

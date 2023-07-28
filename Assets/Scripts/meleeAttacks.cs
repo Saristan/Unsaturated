@@ -18,12 +18,17 @@ public class meleeAttacks : MonoBehaviour
     public GameObject player;
     public Transform attackBox;
 
-    public GameObject baseSlash;
+    [SerializeField] private GameObject baseSlashBox;
+    [SerializeField] private GameObject upChargeBox;
+    [SerializeField] private GameObject chargeBox1;
+    [SerializeField] private GameObject chargeBox2;
 
     [SerializeField] private TrailRenderer tr;
 
     private float chargeAttackTimer = 0f;
     public float chargeAttackWarm = 1.5f;
+    private bool isDashattack = false;
+    private bool isAttacking = false;
 
     public int attackDamage = 40;
     public float attackRate = 2.5f;
@@ -38,7 +43,7 @@ public class meleeAttacks : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Time.time >= nextAttackTime)
+        if(Time.time >= nextAttackTime && !isAttacking)
         {
             if(!player.GetComponent<playerMovement>().IsGrounded())
             {
@@ -79,11 +84,16 @@ public class meleeAttacks : MonoBehaviour
                 if (chargeAttackTimer >= chargeAttackWarm)
                 {
                     ChargeAttack();
+                    if(!Input.GetButton("Up") && !Input.GetButton("Down"))
+                    {     
+                        chargeBox1.GetComponent<Animator>().Play("attack_charge");
+                        chargeBox2.GetComponent<Animator>().Play("attack_charge");
+                    }
                 }
                 chargeAttackTimer = 0f;
             }
 
-            if (Input.GetButtonDown("Fire1") && player.GetComponent<playerMovement>().isDashing)
+            if (Input.GetButtonDown("Fire1") && player.GetComponent<playerMovement>().isDashing && !isDashattack)
                 {
                     Debug.Log("DashAttack");
                     StartCoroutine(DashAttack());
@@ -91,8 +101,8 @@ public class meleeAttacks : MonoBehaviour
             else if (Input.GetButtonDown("Fire1"))
                 {
                     BaseAttack();
-                    baseSlash.GetComponent<Animator>().Play("attack_baseSlash");
-                    baseSlash.transform.localScale = new Vector3(baseSlash.transform.localScale.x, -baseSlash.transform.localScale.y, baseSlash.transform.localScale.z);
+                    baseSlashBox.GetComponent<Animator>().Play("attack_baseSlash");
+                    baseSlashBox.transform.localScale = new Vector3(baseSlashBox.transform.localScale.x, -baseSlashBox.transform.localScale.y, baseSlashBox.transform.localScale.z);
                     nextAttackTime = Time.time + 1f/attackRate;
                 } 
         }
@@ -120,11 +130,11 @@ public class meleeAttacks : MonoBehaviour
                 airSlashCount = 0;
             }
             else{
-                if (enemy.transform.position.x <= transform.position.x)
+                if (!player.GetComponent<playerMovement>().isFacingRight)
                 {
                     enemy.GetComponent<enemy>().TakeDamage(attackDamage, -knockBack, 0f);
                 }
-                else if (enemy.transform.position.x > transform.position.x)
+                else
                 {
                     enemy.GetComponent<enemy>().TakeDamage(attackDamage, knockBack, 0f);
                 }
@@ -168,6 +178,8 @@ public class meleeAttacks : MonoBehaviour
 
     private IEnumerator DashAttack()
     {
+        isDashattack = true;
+        isAttacking = true;
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
         float maxSnapSpeed = 30f;
         float snapSpeed = maxSnapSpeed;
@@ -175,7 +187,7 @@ public class meleeAttacks : MonoBehaviour
         while(snapSpeed > maxSnapSpeed/6)
         {
             tr.emitting = true;
-            player.GetComponent<playerMovement>().isDashing = true;
+            player.GetComponent<playerMovement>().immobile = true;
             if (player.GetComponent<playerMovement>().isFacingRight)
             {
                 yield return rb.velocity = new Vector2(snapSpeed, 0f);
@@ -187,8 +199,10 @@ public class meleeAttacks : MonoBehaviour
             
             snapSpeed -= Time.deltaTime * maxSnapSpeed * 2f;
         }
-        player.GetComponent<playerMovement>().isDashing = false;
+        player.GetComponent<playerMovement>().immobile = false;
         tr.emitting = false;
+        isDashattack = false;
+        isAttacking = false;
     }
 
     private IEnumerator DashAttackDamage()
@@ -251,8 +265,9 @@ public class meleeAttacks : MonoBehaviour
 
     private IEnumerator UpCharge()
     {
+        isAttacking = true;
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
-        player.GetComponent<playerMovement>().isDashing = true;
+        player.GetComponent<playerMovement>().immobile = true;
         float maxSnapSpeed = 30f;
         float snapSpeed = maxSnapSpeed;
         StartCoroutine(UpChargeDamage());
@@ -261,13 +276,15 @@ public class meleeAttacks : MonoBehaviour
             yield return rb.velocity = new Vector2(0f, snapSpeed);
             snapSpeed -= Time.deltaTime * maxSnapSpeed * 2f;
         }
-        player.GetComponent<playerMovement>().isDashing = false;
+        player.GetComponent<playerMovement>().immobile = false;
+        isAttacking = false;
     }
 
     private IEnumerator DownCharge()
     {
+        isAttacking = true;
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
-        player.GetComponent<playerMovement>().isDashing = true;
+        player.GetComponent<playerMovement>().immobile = true;
         float maxSnapSpeed = -30f;
         float snapSpeed = maxSnapSpeed;
         float airTime = 0f;
@@ -278,7 +295,8 @@ public class meleeAttacks : MonoBehaviour
             airTime += Time.deltaTime;
         }
         Debug.Log("Down");
-        player.GetComponent<playerMovement>().isDashing = false;
+        player.GetComponent<playerMovement>().immobile = false;
+        isAttacking = false;
     }
 
     private IEnumerator UpChargeDamage()
@@ -290,9 +308,12 @@ public class meleeAttacks : MonoBehaviour
             foreach(Collider2D enemy in hitEnemies)
             {
                 enemy.GetComponent<enemy>().TakeDamage(attackDamage, 0f, knockBack * (4f - i * 0.5f));
-                Debug.Log(enemy);
             }
-            yield return new WaitForSeconds(0.15f);
+
+            upChargeBox.GetComponent<Animator>().Play("attack_upCharge");
+            upChargeBox.transform.localScale = new Vector3(upChargeBox.transform.localScale.x, -upChargeBox.transform.localScale.y, upChargeBox.transform.localScale.z);
+
+            yield return new WaitForSeconds(0.1f);
         }
     }
 
