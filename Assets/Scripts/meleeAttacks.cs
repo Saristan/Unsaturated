@@ -18,6 +18,8 @@ public class meleeAttacks : MonoBehaviour
     public GameObject player;
     public Transform attackBox;
 
+    public GameObject baseSlash;
+
     [SerializeField] private TrailRenderer tr;
 
     private float chargeAttackTimer = 0f;
@@ -89,6 +91,8 @@ public class meleeAttacks : MonoBehaviour
             else if (Input.GetButtonDown("Fire1"))
                 {
                     BaseAttack();
+                    baseSlash.GetComponent<Animator>().Play("attack_baseSlash");
+                    baseSlash.transform.localScale = new Vector3(baseSlash.transform.localScale.x, -baseSlash.transform.localScale.y, baseSlash.transform.localScale.z);
                     nextAttackTime = Time.time + 1f/attackRate;
                 } 
         }
