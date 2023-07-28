@@ -6,6 +6,8 @@ public class enemy : MonoBehaviour
 {
     public Rigidbody2D rb;
     public LayerMask playerLayer;
+    public bool stunnable = true;
+    public float stunTime = 1.5f;
 
     public int maxHealth = 100;
     int currentHealth;
@@ -26,6 +28,14 @@ public class enemy : MonoBehaviour
         {
             Die();
         }
+    }
+
+    public IEnumerator StunBuffer()
+    {
+        stunnable = false;
+        Debug.Log("Stun Resist");
+        yield return new WaitForSeconds(stunTime);
+        stunnable = true;
     }
 
     private void Die()

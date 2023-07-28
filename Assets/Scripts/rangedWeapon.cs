@@ -93,6 +93,39 @@ public class rangedWeapon : MonoBehaviour
         }
     }
 
+    public void StunShotCall(Collider2D enemy)
+    {
+        StartCoroutine(StunShot(enemy));
+    }
+
+    public IEnumerator StunShot(Collider2D enemy)
+    {
+        if(enemy.GetComponent<enemy>().stunnable)
+        {
+            StartCoroutine(enemy.GetComponent<enemy>().StunBuffer());
+            Rigidbody2D rb = enemy.GetComponent<Rigidbody2D>();
+            float stunTime = 1.5f;
+            float xPos = rb.position.x;
+            float yPos = rb.position.y;
+            float originalGravity = rb.gravityScale;
+            rb.gravityScale = 0f;
+            Debug.Log(stunTime);
+
+            while(stunTime > 0f)
+            {
+                yield return rb.position = new Vector2(xPos, yPos);
+                float xVel = Random.Range(-2f, 2f);
+                float yVel = Random.Range(-2f, 2f);
+                yield return rb.velocity = new Vector2(xVel, yVel);
+                stunTime -= Time.deltaTime * 2f;
+                //Debug.Log(stunTime);
+                //Debug.Log("Stun");
+            }
+            rb.gravityScale = originalGravity;
+        }
+
+    }
+
     private IEnumerator LatchShot()
     {
         Rigidbody2D playerRB = player.GetComponent<Rigidbody2D>();

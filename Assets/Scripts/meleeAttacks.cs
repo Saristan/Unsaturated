@@ -11,10 +11,14 @@ public class meleeAttacks : MonoBehaviour
     public Transform chargeC2;
     public Transform upChargeC1;
     public Transform upChargeC2;
+    public Transform downChargeC1;
+    public Transform downChargeC2;
 
     public LayerMask enemyLayers;
     public GameObject player;
     public Transform attackBox;
+
+    [SerializeField] private TrailRenderer tr;
 
     private float chargeAttackTimer = 0f;
     public float chargeAttackWarm = 1.5f;
@@ -80,7 +84,7 @@ public class meleeAttacks : MonoBehaviour
             if (Input.GetButtonDown("Fire1") && player.GetComponent<playerMovement>().isDashing)
                 {
                     Debug.Log("DashAttack");
-                    DashAttack();
+                    StartCoroutine(DashAttack());
                 }
             else if (Input.GetButtonDown("Fire1"))
                 {
@@ -134,7 +138,7 @@ public class meleeAttacks : MonoBehaviour
         }
     }
     
-    private void DashAttack()
+    /*private void DashAttack()
     {
         Collider2D[] hitEnemies = Physics2D.OverlapAreaAll(c1.position, dashC.position, enemyLayers);
 
@@ -147,14 +151,67 @@ public class meleeAttacks : MonoBehaviour
                 airDashKB = 1.4f;
             }
 
-            if (enemy.transform.position.x <= transform.position.x)
+            if (!player.GetComponent<playerMovement>().isFacingRight)
             {
                 enemy.GetComponent<enemy>().TakeDamage(attackDamage, -knockBack * 1.5f * airDashKB, knockBack * 1.2f);
             }
-            if (enemy.transform.position.x > transform.position.x)
+            else
             {
                 enemy.GetComponent<enemy>().TakeDamage(attackDamage, knockBack * 1.5f * airDashKB, knockBack * 1.2f);
             }
+        }
+    }*/
+
+    private IEnumerator DashAttack()
+    {
+        Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+        float maxSnapSpeed = 30f;
+        float snapSpeed = maxSnapSpeed;
+        StartCoroutine(DashAttackDamage());
+        while(snapSpeed > maxSnapSpeed/6)
+        {
+            tr.emitting = true;
+            player.GetComponent<playerMovement>().isDashing = true;
+            if (player.GetComponent<playerMovement>().isFacingRight)
+            {
+                yield return rb.velocity = new Vector2(snapSpeed, 0f);
+            }
+            else
+            {
+                yield return rb.velocity = new Vector2(-snapSpeed, 0f);
+            }
+            
+            snapSpeed -= Time.deltaTime * maxSnapSpeed * 2f;
+        }
+        player.GetComponent<playerMovement>().isDashing = false;
+        tr.emitting = false;
+    }
+
+    private IEnumerator DashAttackDamage()
+    {
+        for(float i = 0; i < 4; i++)
+        {
+            Collider2D[] hitEnemies = Physics2D.OverlapAreaAll(c1.position, dashC.position, enemyLayers);
+
+            foreach(Collider2D enemy in hitEnemies)
+            {
+                float airDashKB = 1f;
+
+                if(!enemy.GetComponent<enemyMovement>().IsGrounded())
+                {
+                    airDashKB = 1.4f;
+                }
+
+                if (!player.GetComponent<playerMovement>().isFacingRight)
+                {
+                    enemy.GetComponent<enemy>().TakeDamage(attackDamage, -knockBack * 1.5f * airDashKB, knockBack * 1.2f);
+                }
+                else
+                {
+                    enemy.GetComponent<enemy>().TakeDamage(attackDamage, knockBack * 1.5f * airDashKB, knockBack * 1.2f);
+                }
+            }
+            yield return new WaitForSeconds(0.15f);
         }
     }
 
@@ -163,11 +220,6 @@ public class meleeAttacks : MonoBehaviour
         if(Input.GetButton("Down") && !player.GetComponent<playerMovement>().IsGrounded())
         {
             StartCoroutine(DownCharge());
-            Collider2D[] hitEnemies = Physics2D.OverlapAreaAll(c1.position, c2.position, enemyLayers);
-            foreach(Collider2D enemy in hitEnemies)
-            {
-                enemy.GetComponent<enemy>().TakeDamage(attackDamage, 0f, knockBack * -6f);
-            }
         }
 
         if(Input.GetButton("Up"))
@@ -183,11 +235,11 @@ public class meleeAttacks : MonoBehaviour
             {
                 if (enemy.transform.position.x <= transform.position.x)
                 {
-                    enemy.GetComponent<enemy>().TakeDamage(attackDamage, -knockBack * .7f, knockBack * 1.5f);
+                    enemy.GetComponent<enemy>().TakeDamage(attackDamage, -knockBack * 1.2f, knockBack * 1.5f);
                 }
                 if (enemy.transform.position.x > transform.position.x)
                 {
-                    enemy.GetComponent<enemy>().TakeDamage(attackDamage, knockBack * .7f, knockBack * 1.5f);
+                    enemy.GetComponent<enemy>().TakeDamage(attackDamage, knockBack * 1.2f, knockBack * 1.5f);
                 }
             }
         }
@@ -215,7 +267,7 @@ public class meleeAttacks : MonoBehaviour
         float maxSnapSpeed = -30f;
         float snapSpeed = maxSnapSpeed;
         float airTime = 0f;
-        //StartCoroutine(DownChargeDamage());
+        StartCoroutine(DownChargeDamage());
         while(!player.GetComponent<playerMovement>().IsGrounded())
         {
             yield return rb.velocity = new Vector2(0f, snapSpeed);
@@ -229,13 +281,29 @@ public class meleeAttacks : MonoBehaviour
     {
         for(float i = 0; i < 4; i++)
         {
-            Collider2D[] hitEnemies = Physics2D.OverlapAreaAll(chargeC1.position, chargeC2.position, enemyLayers);
+            Collider2D[] hitEnemies = Physics2D.OverlapAreaAll(upChargeC1.position, upChargeC2.position, enemyLayers);
 
             foreach(Collider2D enemy in hitEnemies)
             {
-                enemy.GetComponent<enemy>().TakeDamage(attackDamage, 0f, knockBack * (4f - i * 0.8f));
+                enemy.GetComponent<enemy>().TakeDamage(attackDamage, 0f, knockBack * (4f - i * 0.5f));
+                Debug.Log(enemy);
             }
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(0.15f);
+        }
+    }
+
+    private IEnumerator DownChargeDamage()
+    {
+        while(!player.GetComponent<playerMovement>().IsGrounded())
+        {
+            Collider2D[] hitEnemies = Physics2D.OverlapAreaAll(downChargeC1.position, downChargeC2.position, enemyLayers);
+
+            foreach(Collider2D enemy in hitEnemies)
+            {
+                enemy.GetComponent<enemy>().TakeDamage(attackDamage, 0f, -knockBack * 6f);
+                Debug.Log(enemy);
+            }
+            yield return new WaitForSeconds(0.05f);
         }
     }
     

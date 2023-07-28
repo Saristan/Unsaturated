@@ -24,14 +24,8 @@ public class bullet : MonoBehaviour
         
         if (enemy != null)
         {
-            if (enemy.transform.position.x <= transform.position.x)
-            {
-                enemy.TakeDamage(damage, -knockBack, 0f);
-            }
-            if (enemy.transform.position.x > transform.position.x)
-            {
-                enemy.TakeDamage(damage, knockBack, 0f);
-            }
+            GameObject player = References.thePlayer;
+            References.thePlayer.GetComponent<rangedWeapon>().StunShotCall(hitInfo);
         }
         
         Destroy(gameObject);
@@ -39,7 +33,7 @@ public class bullet : MonoBehaviour
 
     private IEnumerator BulletDeath()
     {
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(5f);
         Destroy(gameObject);
     }
 }
